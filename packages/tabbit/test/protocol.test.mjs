@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { lastUserText } from "../src/openai.mjs"
+import { assertTextOnly, conversationText, lastUserText } from "../src/openai.mjs"
 import { parseBlockForTest } from "../src/protocol.mjs"
 
 describe("lastUserText", () => {
@@ -30,6 +30,31 @@ describe("lastUserText", () => {
     expect(lastUserText({ messages: [{ role: "assistant", content: "hi" }] })).toBeNull()
     expect(lastUserText({})).toBeNull()
     expect(lastUserText({ messages: [{ role: "user", content: "  " }] })).toBeNull()
+  })
+})
+
+describe("conversationText", () => {
+  test("keeps role-labelled text history for the stateless Tabbit room", () => {
+    expect(conversationText({ messages: [
+      { role: "system", content: "Be concise" },
+      { role: "user", content: "First question" },
+      { role: "assistant", content: "First answer" },
+      { role: "user", content: "Follow up" },
+    ] })).toBe("Instructions:\nBe concise\n\nUser:\nFirst question\n\nAssistant:\nFirst answer\n\nUser:\nFollow up")
+  })
+})
+
+describe("assertTextOnly", () => {
+  test("refuses OpenAI tools instead of silently dropping them", () => {
+    expect(() => assertTextOnly({ tools: [{ type: "function", function: { name: "read_file" } }] }))
+      .toThrow("does not expose external tool calls")
+  })
+
+  test("refuses legacy functions and forced tool choices", () => {
+    expect(() => assertTextOnly({ functions: [{ name: "read_file" }] })).toThrow("does not expose external tool calls")
+    expect(() => assertTextOnly({ tool_choice: "required" })).toThrow("does not support tool_choice")
+    expect(() => assertTextOnly({ function_call: "auto" })).toThrow("does not support tool_choice")
+    expect(() => assertTextOnly({ tools: [], tool_choice: "none" })).not.toThrow()
   })
 })
 

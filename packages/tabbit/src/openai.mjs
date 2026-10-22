@@ -20,11 +20,12 @@ const finish = (model, reason = "stop") =>
 
 /**
  * Turns one chat-completions request into a Tabbit turn and streams the reply.
- * `tools` is dropped: Tabbit's chat scene takes no tool definitions, so a
- * request carrying them is refused rather than silently degraded.
+ * Tabbit's API does not accept caller-defined tools. Refuse those requests
+ * instead of silently dropping the tool contract.
  */
 export async function streamChatCompletion(site, body, { fetchImpl = fetch, signal } = {}) {
-  const prompt = lastUserText(body)
+  assertTextOnly(body)
+  const prompt = conversationText(body)
   if (!prompt) throw new Error("Tabbit needs a user message")
   const model = body.model ?? "DeepSeek-V4.1-Flash"
 
@@ -63,6 +64,15 @@ export async function streamChatCompletion(site, body, { fetchImpl = fetch, sign
   })
 }
 
+export function assertTextOnly(body) {
+  if ((Array.isArray(body?.tools) && body.tools.length > 0) || (Array.isArray(body?.functions) && body.functions.length > 0)) {
+    throw new Error("Tabbit chat does not expose external tool calls; use a model with tool calling enabled")
+  }
+  if ((body?.tool_choice && body.tool_choice !== "none") || (body?.function_call && body.function_call !== "none")) {
+    throw new Error("Tabbit chat does not support tool_choice")
+  }
+}
+
 const chunk = (model, delta) => ({
   id: "chatcmpl-tabbit",
   object: "chat.completion.chunk",
@@ -88,4 +98,33 @@ export function lastUserText(body) {
     }
   }
   return null
+}
+
+/** Preserve the caller's text history when Tabbit starts a fresh room per turn. */
+export function conversationText(body) {
+  const messages = Array.isArray(body?.messages) ? body.messages : []
+  const lines = []
+  for (const message of messages) {
+    const text = messageText(message?.content)
+    if (!text) continue
+    const role = message.role === "system" || message.role === "developer"
+      ? "Instructions"
+      : message.role === "assistant"
+        ? "Assistant"
+        : message.role === "tool"
+          ? `Tool result${message.tool_call_id ? ` (${message.tool_call_id})` : ""}`
+          : "User"
+    lines.push(`${role}:\n${text}`)
+  }
+  return lines.join("\n\n").trim() || lastUserText(body)
+}
+
+function messageText(content) {
+  if (typeof content === "string") return content.trim()
+  if (!Array.isArray(content)) return ""
+  return content
+    .filter((part) => part?.type === "text" && typeof part.text === "string")
+    .map((part) => part.text)
+    .join("\n")
+    .trim()
 }

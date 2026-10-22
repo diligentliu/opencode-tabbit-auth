@@ -70,10 +70,20 @@ models it actually has, and a free-tier account never receives a
 `/api/commerce/quota/v1/usage`, showing the weekly allowance used and when it
 resets.
 
+## Chat mode and Task mode
+
+Tabbit itself has a Task mode. It can use Tabbit's own Agent runtime, browser
+automation, and configured MCP servers. That is a separate product workflow.
+This plugin connects magpie to Tabbit's `/api/v3/chat` endpoint; Tabbit does
+not return arbitrary OpenAI `tool_calls` through this endpoint, so it cannot
+hand a Codex or Claude Code tool request back to that client. The plugin marks
+its models as not supporting tool calls and rejects requests that declare
+tools, rather than pretending they ran. A Task mode request sent through this
+provider would be executed by Tabbit's own Agent runtime, not by the calling
+agent's tools or filesystem.
+
 ## Limits
 
-- **No tool calls.** Tabbit's chat scene takes no tool definitions, so a
-  request carrying them is refused rather than silently degraded.
 - **No refresh.** The token is a week-long JWT with no refresh endpoint. When
   it lapses, copy the cookie again.
 - **Text only.** Images in a user message are dropped with the rest of the
