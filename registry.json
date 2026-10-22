@@ -1,0 +1,15 @@
+[
+  {
+    "package": "@magpie-community/opencode-tabbit-auth",
+    "name": "Tabbit",
+    "icon": "https://www.tabbit.com/favicon.ico",
+    "providers": [
+      "tabbit",
+      "tabbit-ai"
+    ],
+    "summary": {
+      "en": "Tabbit Browser's own models, on the China and international builds.",
+      "zh": "Tabbit \u6d4f\u89c8\u5668\u81ea\u5e26\u7684\u6a21\u578b\u989d\u5ea6\uff0c\u56fd\u5185\u7248\u548c\u56fd\u9645\u7248\u90fd\u652f\u6301\u3002"
+    }
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "name": "@magpie-community/opencode-tabbit-auth",
+  "version": "0.1.0",
+  "description": "Tabbit Browser plans (China and international builds): Tabbit's own model allowance, through Tabbit's web protocol",
+  "type": "module",
+  "main": "./index.mjs",
+  "files": ["index.mjs", "src", "README.md"],
+  "keywords": ["opencode", "opencode-plugin", "tabbit", "magpie", "browser", "coding-plan"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/magpie-community/plugins.git",
+    "directory": "packages/tabbit"
+  },
+  "magpie": { "maxConcurrency": 2 }
+}
